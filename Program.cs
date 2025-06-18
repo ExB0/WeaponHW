@@ -2,32 +2,32 @@
 
 public class Weapon
 {
-     private int _damage;
-     private int _bullets;
+    private const int BulletPerShot = 1;
+
+    public int Damage { get; }
+    public int Bullets { get; private set; }
 
     public Weapon(int damage, int bullets)
     {
-        _damage = damage;
-        _bullets = bullets;
+        if (damage <= 0)
+            throw new ArgumentOutOfRangeException(nameof(damage), "Урон должен быть > 0");
+        if (bullets < 0)
+            throw new ArgumentOutOfRangeException(nameof(bullets), "Пуль не может быть < 0");
+
+        Damage = damage;
+        Bullets = bullets;
     }
-
-    public int Damage => _damage;
-    public int Bullets => _bullets;
-
 
     public void Fire(Player player)
     {
         if (player == null)
-        {
-            throw new ArgumentOutOfRangeException(nameof(player),"нет Цели");
-        }
-        if (_bullets <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(_bullets),"Нет пули");
-        }
-        player.TakeDamage(_damage);
-        _bullets -= 1;
+            throw new ArgumentNullException(nameof(player), "Нет цели");
 
+        if (Bullets < BulletPerShot)
+            throw new InvalidOperationException("Недостаточно пуль");
+
+        player.TakeDamage(Damage);
+        Bullets -= BulletPerShot;
     }
 }
 
@@ -37,37 +37,34 @@ public class Player
 
     public Player(int health)
     {
+        if (health <= 0)
+            throw new ArgumentOutOfRangeException(nameof(health), "Здоровье должно быть > 0");
         _health = health;
     }
 
     public int Health => _health;
+    public bool IsDead => _health <= 0;
 
     public void TakeDamage(int damage)
     {
-        if (damage <=0)
+        if (damage <= 0)
+            throw new ArgumentOutOfRangeException(nameof(damage), "Урон должен быть > 0");
+        if (IsDead)
         {
-            throw new ArgumentOutOfRangeException(nameof(damage),"урон не может быть меньше или равно 0");
+            throw new InvalidOperationException("Цель мертва");
         }
         _health = (int)MathF.Max(0, _health - damage);
-        if (IsDead(_health))
-        {
-            return;
-        }
-    }
-
-    private bool IsDead(int health)
-    {
-        return health <= 0;
     }
 }
 
+
 public class Bot
 {
-    private Weapon _weapon = new Weapon(2,30);
+    private readonly Weapon _weapon;
 
     public Bot(Weapon weapon)
     {
-        _weapon = weapon;
+        _weapon = weapon ?? throw new ArgumentNullException(nameof(weapon));
     }
 
     public void OnSeePlayer(Player player)
@@ -75,4 +72,3 @@ public class Bot
         _weapon.Fire(player);
     }
 }
-
