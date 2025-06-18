@@ -2,7 +2,7 @@
 
 public class Weapon
 {
-    private const int BulletPerShot = 1;
+    private const int _bulletPerShot = 1;
 
     public int Damage { get; }
     public int Bullets { get; private set; }
@@ -11,8 +11,9 @@ public class Weapon
     {
         if (damage <= 0)
             throw new ArgumentOutOfRangeException(nameof(damage), "Урон должен быть > 0");
+
         if (bullets < 0)
-            throw new ArgumentOutOfRangeException(nameof(bullets), "Пуль не может быть < 0");
+            throw new ArgumentOutOfRangeException(nameof(bullets), "Количество пуль не может быть < 0");
 
         Damage = damage;
         Bullets = bullets;
@@ -21,13 +22,13 @@ public class Weapon
     public void Fire(Player player)
     {
         if (player == null)
-            throw new ArgumentNullException(nameof(player), "Нет цели");
+            throw new ArgumentNullException(nameof(player), "Цель отсутствует");
 
-        if (Bullets < BulletPerShot)
+        if (Bullets < _bulletPerShot)
             throw new InvalidOperationException("Недостаточно пуль");
 
         player.TakeDamage(Damage);
-        Bullets -= BulletPerShot;
+        Bullets -= _bulletPerShot;
     }
 }
 
@@ -39,6 +40,7 @@ public class Player
     {
         if (health <= 0)
             throw new ArgumentOutOfRangeException(nameof(health), "Здоровье должно быть > 0");
+
         _health = health;
     }
 
@@ -49,14 +51,13 @@ public class Player
     {
         if (damage <= 0)
             throw new ArgumentOutOfRangeException(nameof(damage), "Урон должен быть > 0");
+
         if (IsDead)
-        {
-            throw new InvalidOperationException("Цель мертва");
-        }
+            throw new InvalidOperationException("Цель уже мертва");
+
         _health = (int)MathF.Max(0, _health - damage);
     }
 }
-
 
 public class Bot
 {
@@ -64,11 +65,17 @@ public class Bot
 
     public Bot(Weapon weapon)
     {
-        _weapon = weapon ?? throw new ArgumentNullException(nameof(weapon));
+        if (weapon == null)
+            throw new ArgumentNullException(nameof(weapon), "Оружие не может быть null");
+
+        _weapon = weapon;
     }
 
     public void OnSeePlayer(Player player)
     {
+        if (player == null)
+            throw new ArgumentNullException(nameof(player), "Цель отсутствует");
+
         _weapon.Fire(player);
     }
 }
